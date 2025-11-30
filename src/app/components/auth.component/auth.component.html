@@ -1,0 +1,87 @@
+<div class="auth-container">
+  <div class="auth-card" [class.signup-mode]="!isLoginMode">
+
+    <!-- Panel izquierdo - Welcome / Welcome Back -->
+    <div class="welcome-section">
+      <div class="welcome-content">
+        <h2>{{ isLoginMode ? 'Hello, Welcome!' : 'Welcome Back!' }}</h2>
+        <p>{{ isLoginMode ? "Don't have an account?" : 'Already have an account?' }}</p>
+        <button class="btn-outline" (click)="toggleMode()">
+          {{ isLoginMode ? 'Register' : 'Login' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenedor de formularios -->
+    <div class="forms-container">
+
+      <!-- Formulario Login -->
+      <div class="form-section login-form" [class.active]="isLoginMode">
+        <div class="form-content">
+          <h2>Login</h2>
+
+          <form>
+            <div class="input-group">
+              <input type="text" placeholder="Username" class="input-field">
+              <span class="input-icon">👤</span>
+            </div>
+
+            <div class="input-group">
+              <input type="password" placeholder="Password" class="input-field">
+              <span class="input-icon">🔒</span>
+            </div>
+
+            <a href="#" class="forgot-password">Forgot password?</a>
+
+            <button type="button" class="btn-primary" (click)="onLogin()">Login</button>          </form>
+        </div>
+      </div>
+
+      <!-- Formulario Signup -->
+      <div class="form-section signup-form" [class.active]="!isLoginMode">
+        <div class="form-content">
+          <h2>Registration</h2>
+
+          <form class="form-container">
+            <div class="column">
+              <div class="input-group">
+                <input type="text" placeholder="Nombres" class="input-field">
+                <span class="input-icon">👤</span>
+              </div>
+
+              <div class="input-group">
+                <input type="text" placeholder="Username" class="input-field">
+                <span class="input-icon">👤</span>
+              </div>
+
+              <div class="input-group">
+                <input type="password" placeholder="Contraseña" class="input-field">
+                <span class="input-icon">🔒</span>
+              </div>
+            </div>
+
+            <div class="column">
+              <div class="input-group">
+                <input type="text" placeholder="Apellidos" class="input-field">
+                <span class="input-icon">👤</span>
+              </div>
+
+              <div class="input-group">
+                <input type="email" placeholder="Correo" class="input-field">
+                <span class="input-icon">✉️</span>
+              </div>
+
+              <div class="input-group">
+                <input type="password" placeholder="Confirmar Contraseña" class="input-field">
+                <span class="input-icon">🔒</span>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" (click)="onSignup()">Sign Up</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

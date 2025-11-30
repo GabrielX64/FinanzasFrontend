@@ -1,0 +1,279 @@
+:host {
+  display: block;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.auth-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.auth-card {
+  display: flex;
+  width: 800px;
+  height: 450px;
+  background: white;
+  border-radius: 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  position: relative;
+  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Panel Welcome - Se mueve de izquierda a derecha */
+.welcome-section {
+  width: 400px;
+  height: 100%;
+  background: linear-gradient(135deg, #6b9ff5 0%, #5a8de8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  border-top-right-radius: 25%;
+  border-bottom-right-radius: 25%;
+}
+
+/* Cuando está en modo signup, el panel se mueve a la derecha */
+.auth-card.signup-mode .welcome-section {
+  left: 400px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 25%;
+  border-bottom-left-radius: 25%;
+}
+
+.welcome-content {
+  text-align: center;
+  color: white;
+  padding: 40px;
+  transition: all 0.3s ease;
+}
+
+.welcome-section h2 {
+  color: white;
+  font-size: 40px;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+.welcome-section p {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 16px;
+  margin-bottom: 30px;
+}
+
+.btn-outline {
+  padding: 14px 55px;
+  background: transparent;
+  border: 2px solid white;
+  border-radius: 30px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-outline:hover {
+  background: white;
+  color: #6b9ff5;
+  transform: translateY(-2px);
+}
+
+/* Contenedor de formularios */
+.forms-container {
+  width: 800px;
+  height: 100%;
+  position: relative;
+}
+
+.form-section {
+  width: 400px;
+  height: 100%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Formulario Login - Empieza a la derecha */
+.login-form {
+  right: 0;
+}
+
+.login-form.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(0);
+}
+
+/* Formulario Signup - Empieza a la izquierda */
+.signup-form {
+  left: 0;
+}
+
+.signup-form.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(0);
+}
+
+/* Cuando no está activo, se ocultan a los lados */
+.login-form:not(.active) {
+  transform: translateX(100px);
+}
+
+.signup-form:not(.active) {
+  transform: translateX(-100px);
+}
+
+.form-content {
+  width: 100%;
+  max-width: 420px;
+  padding: 30px 50px;
+}
+
+/* Para el formulario de signup necesita menos padding */
+.signup-form .form-content {
+  padding: 20px 30px;
+}
+
+h2 {
+  color: #2c3e50;
+  font-size: 36px;
+  margin-bottom: 35px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.signup-form h2 {
+  margin-bottom: 25px;
+  font-size: 32px;
+}
+
+form {
+  width: 100%;
+}
+
+/* Grid para el formulario de registro */
+.form-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  grid-template-areas:
+    "col1 col2"
+    "button button";
+}
+
+.column:nth-child(1) { grid-area: col1; }
+.column:nth-child(2) { grid-area: col2; }
+
+.input-group {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.form-container .input-group {
+  margin-bottom: 15px;
+}
+
+.input-field {
+  width: 100%;
+  padding: 16px 45px 16px 18px;
+  border: none;
+  background: #f0f0f0;
+  border-radius: 12px;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.3s;
+  box-sizing: border-box;
+  color: #666;
+}
+
+.form-container .input-field {
+  padding: 14px 45px 14px 16px;
+  font-size: 14px;
+}
+
+.input-field::placeholder {
+  color: #999;
+}
+
+.input-field:focus {
+  background: #e8e8e8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.input-icon {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #999;
+}
+
+.form-container .input-icon {
+  right: 16px;
+  font-size: 16px;
+}
+
+.forgot-password {
+  display: block;
+  text-align: right;
+  color: #999;
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 25px;
+  margin-top: -10px;
+}
+
+.forgot-password:hover {
+  color: #6b9ff5;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #6b9ff5 0%, #5a8de8 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 20px;
+  grid-area: button;
+}
+
+.form-container .btn-primary {
+  margin-top: 10px;
+  padding: 14px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(107, 159, 245, 0.4);
+}

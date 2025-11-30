@@ -1,0 +1,524 @@
+<div class="payment-plan-container">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-content">
+      <h1 class="app-title">🏠 Sistema de Crédito MiVivienda</h1>
+      <div class="user-section">
+        <span class="username">👤 Asesor Inmobiliario</span>
+        <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Progress Steps -->
+  <div class="progress-container" *ngIf="!showResults">
+    <div class="progress-steps">
+      <div class="step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
+        <div class="step-number">1</div>
+        <div class="step-label">Cliente</div>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 1"></div>
+      <div class="step" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">
+        <div class="step-number">2</div>
+        <div class="step-label">Propiedad</div>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 2"></div>
+      <div class="step" [class.active]="currentStep >= 3" [class.completed]="currentStep > 3">
+        <div class="step-number">3</div>
+        <div class="step-label">Préstamo</div>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 3"></div>
+      <div class="step" [class.active]="currentStep >= 4">
+        <div class="step-number">4</div>
+        <div class="step-label">Resultados</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+
+    <!-- PASO 1: DATOS DEL CLIENTE -->
+    <div class="form-step" *ngIf="currentStep === 1">
+      <div class="card">
+        <div class="card-header">
+          <h2>👤 Información del Cliente</h2>
+          <p class="card-subtitle">Datos socioeconómicos del potencial comprador</p>
+        </div>
+
+        <form [formGroup]="clienteForm">
+          <div class="form-grid-3">
+            <div class="form-group" [class.error]="isFieldInvalid(clienteForm, 'nombres')">
+              <label class="form-label">Nombres *</label>
+              <input type="text" class="form-input" formControlName="nombres" placeholder="Ej: Juan Carlos">
+              <span class="error-message" *ngIf="hasError(clienteForm, 'nombres', 'required')">Campo requerido</span>
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(clienteForm, 'apellidos')">
+              <label class="form-label">Apellidos *</label>
+              <input type="text" class="form-input" formControlName="apellidos" placeholder="Ej: García López">
+              <span class="error-message" *ngIf="hasError(clienteForm, 'apellidos', 'required')">Campo requerido</span>
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(clienteForm, 'dni')">
+              <label class="form-label">DNI *</label>
+              <input type="text" class="form-input" formControlName="dni" placeholder="12345678" maxlength="8">
+              <span class="error-message" *ngIf="hasError(clienteForm, 'dni', 'pattern')">DNI debe tener 8 dígitos</span>
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(clienteForm, 'email')">
+              <label class="form-label">Email *</label>
+              <input type="email" class="form-input" formControlName="email" placeholder="correo@ejemplo.com">
+              <span class="error-message" *ngIf="hasError(clienteForm, 'email', 'email')">Email inválido</span>
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(clienteForm, 'telefono')">
+              <label class="form-label">Teléfono *</label>
+              <input type="text" class="form-input" formControlName="telefono" placeholder="987654321" maxlength="9">
+              <span class="error-message" *ngIf="hasError(clienteForm, 'telefono', 'pattern')">Teléfono debe tener 9 dígitos</span>
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(clienteForm, 'ingresoMensual')">
+              <label class="form-label">Ingreso Mensual (S/) *</label>
+              <input type="number" class="form-input" formControlName="ingresoMensual" placeholder="0.00">
+              <span class="error-message" *ngIf="hasError(clienteForm, 'ingresoMensual', 'required')">Campo requerido</span>
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(clienteForm, 'ocupacion')">
+              <label class="form-label">Ocupación *</label>
+              <input type="text" class="form-input" formControlName="ocupacion" placeholder="Ej: Ingeniero">
+              <span class="error-message" *ngIf="hasError(clienteForm, 'ocupacion', 'required')">Campo requerido</span>
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(clienteForm, 'estadoCivil')">
+              <label class="form-label">Estado Civil *</label>
+              <select class="form-input" formControlName="estadoCivil">
+                <option value="">Seleccione...</option>
+                <option value="soltero">Soltero(a)</option>
+                <option value="casado">Casado(a)</option>
+                <option value="divorciado">Divorciado(a)</option>
+                <option value="viudo">Viudo(a)</option>
+              </select>
+            </div>
+
+            <div class="form-group full-width" [class.error]="isFieldInvalid(clienteForm, 'direccion')">
+              <label class="form-label">Dirección Actual *</label>
+              <input type="text" class="form-input" formControlName="direccion" placeholder="Calle, número, distrito">
+              <span class="error-message" *ngIf="hasError(clienteForm, 'direccion', 'required')">Campo requerido</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-primary" (click)="nextStep()">
+              Siguiente →
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- PASO 2: DATOS DE LA PROPIEDAD -->
+    <div class="form-step" *ngIf="currentStep === 2">
+      <div class="card">
+        <div class="card-header">
+          <h2>🏘️ Información de la Propiedad</h2>
+          <p class="card-subtitle">Características de la unidad inmobiliaria de interés</p>
+        </div>
+
+        <form [formGroup]="propiedadForm">
+          <div class="form-grid-3">
+            <div class="form-group" [class.error]="isFieldInvalid(propiedadForm, 'codigo')">
+              <label class="form-label">Código de Propiedad *</label>
+              <input type="text" class="form-input" formControlName="codigo" placeholder="Ej: PROP-001">
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(propiedadForm, 'tipo')">
+              <label class="form-label">Tipo de Propiedad *</label>
+              <select class="form-input" formControlName="tipo">
+                <option value="">Seleccione...</option>
+                <option value="casa">Casa</option>
+                <option value="departamento">Departamento</option>
+                <option value="duplex">Dúplex</option>
+                <option value="townhouse">Townhouse</option>
+              </select>
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(propiedadForm, 'precio')">
+              <label class="form-label">Precio de Venta (S/) *</label>
+              <input type="number" class="form-input" formControlName="precio" placeholder="0.00">
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(propiedadForm, 'area')">
+              <label class="form-label">Área Total (m²) *</label>
+              <input type="number" class="form-input" formControlName="area" placeholder="0.00">
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(propiedadForm, 'numeroHabitaciones')">
+              <label class="form-label">N° Habitaciones *</label>
+              <input type="number" class="form-input" formControlName="numeroHabitaciones" placeholder="0">
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(propiedadForm, 'numeroBanos')">
+              <label class="form-label">N° Baños *</label>
+              <input type="number" class="form-input" formControlName="numeroBanos" placeholder="0">
+            </div>
+
+            <div class="form-group full-width" [class.error]="isFieldInvalid(propiedadForm, 'direccion')">
+              <label class="form-label">Dirección de la Propiedad *</label>
+              <input type="text" class="form-input" formControlName="direccion" placeholder="Calle, número, manzana, lote">
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(propiedadForm, 'distrito')">
+              <label class="form-label">Distrito *</label>
+              <input type="text" class="form-input" formControlName="distrito" placeholder="Ej: San Miguel">
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(propiedadForm, 'provincia')">
+              <label class="form-label">Provincia *</label>
+              <input type="text" class="form-input" formControlName="provincia" placeholder="Ej: Lima">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="prevStep()">
+              ← Anterior
+            </button>
+            <button type="button" class="btn-primary" (click)="nextStep()">
+              Siguiente →
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- PASO 3: CONFIGURACIÓN DEL PRÉSTAMO -->
+    <div class="form-step" *ngIf="currentStep === 3">
+      <div class="card">
+        <div class="card-header">
+          <h2>💰 Configuración del Crédito MiVivienda</h2>
+          <p class="card-subtitle">Parámetros del financiamiento y condiciones del préstamo</p>
+        </div>
+
+        <form [formGroup]="prestamoForm">
+          <!-- Datos básicos del préstamo -->
+          <h3 class="section-title">Datos del Financiamiento</h3>
+          <div class="form-grid-3">
+            <div class="form-group" [class.error]="isFieldInvalid(prestamoForm, 'montoPrestamo')">
+              <label class="form-label">Monto del Préstamo *</label>
+              <input type="number" class="form-input" formControlName="montoPrestamo" placeholder="0.00">
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(prestamoForm, 'cuotaInicial')">
+              <label class="form-label">Cuota Inicial *</label>
+              <input type="number" class="form-input" formControlName="cuotaInicial" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Moneda *</label>
+              <select class="form-input" formControlName="moneda">
+                <option value="PEN">Soles (S/)</option>
+                <option value="USD">Dólares ($)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Bono Techo Propio -->
+          <div class="bono-section">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="bonoTechoPropio">
+              <span>Aplicar Bono de Techo Propio</span>
+            </label>
+
+            <div class="form-group" *ngIf="prestamoForm.get('bonoTechoPropio')?.value">
+              <label class="form-label">Monto del Bono (S/)</label>
+              <input type="number" class="form-input" formControlName="montoBono" placeholder="0.00">
+            </div>
+          </div>
+
+          <!-- Configuración de Tasa -->
+          <h3 class="section-title">Configuración de Tasa de Interés</h3>
+          <div class="form-grid-3">
+            <div class="form-group" [class.error]="isFieldInvalid(prestamoForm, 'tasaInteres')">
+              <label class="form-label">Tasa de Interés Anual (%) *</label>
+              <input type="number" class="form-input" formControlName="tasaInteres" placeholder="0.00" step="0.01">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Tipo de Tasa *</label>
+              <select class="form-input" formControlName="tipoTasa">
+                <option value="efectiva">Efectiva (TEA)</option>
+                <option value="nominal">Nominal (TNA)</option>
+              </select>
+            </div>
+
+            <div class="form-group" [class.error]="isFieldInvalid(prestamoForm, 'plazo')">
+              <label class="form-label">Plazo (meses) *</label>
+              <input type="number" class="form-input" formControlName="plazo" placeholder="12">
+            </div>
+          </div>
+
+          <!-- Períodos de Gracia -->
+          <h3 class="section-title">Períodos de Gracia</h3>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Período de Gracia Total (meses)</label>
+              <input type="number" class="form-input" formControlName="periodoGraciaTotal" placeholder="0">
+              <small class="form-hint">No se paga cuota, el interés se capitaliza</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Período de Gracia Parcial (meses)</label>
+              <input type="number" class="form-input" formControlName="periodoGraciaParcial" placeholder="0">
+              <small class="form-hint">Solo se pagan intereses</small>
+            </div>
+          </div>
+
+          <!-- Entidad Financiera -->
+          <h3 class="section-title">Entidad Financiera</h3>
+          <div class="form-group" [class.error]="isFieldInvalid(prestamoForm, 'entidadFinanciera')">
+            <label class="form-label">Seleccione la Entidad *</label>
+            <select class="form-input" formControlName="entidadFinanciera">
+              <option value="">Seleccione...</option>
+              <option value="bcp">Banco de Crédito del Perú (BCP)</option>
+              <option value="bbva">BBVA</option>
+              <option value="scotiabank">Scotiabank</option>
+              <option value="interbank">Interbank</option>
+              <option value="banbif">BanBif</option>
+              <option value="mibanco">MiBanco</option>
+              <option value="pichincha">Banco Pichincha</option>
+              <option value="gnb">GNB Perú</option>
+            </select>
+          </div>
+
+          <!-- Seguros y Comisiones -->
+          <h3 class="section-title">Seguros y Comisiones</h3>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label">Tasa Seguro Desgravamen (%) *</label>
+              <input type="number" class="form-input" formControlName="tasaSeguroDesgravamen" placeholder="0.05" step="0.01">
+              <small class="form-hint">% mensual sobre saldo</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Tasa Seguro Inmueble (%) *</label>
+              <input type="number" class="form-input" formControlName="tasaSeguroInmueble" placeholder="0.03" step="0.01">
+              <small class="form-hint">% mensual sobre valor propiedad</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Comisión de Activación (S/)</label>
+              <input type="number" class="form-input" formControlName="comisionActivacion" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Tasa Moratoria (% anual) *</label>
+              <input type="number" class="form-input" formControlName="tasaMoratoria" placeholder="5.00" step="0.1">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="prevStep()">
+              ← Anterior
+            </button>
+            <button type="button" class="btn-primary" (click)="nextStep()">
+              📊 Calcular Plan →
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- PASO 4: RESULTADOS -->
+    <div class="results-container" *ngIf="currentStep === 4 && showResults">
+
+      <!-- Resumen del Cliente y Propiedad -->
+      <div class="summary-section">
+        <div class="card summary-card">
+          <h3>👤 Cliente</h3>
+          <div class="summary-data">
+            <p><strong>Nombre:</strong> {{ clienteData?.nombres }} {{ clienteData?.apellidos }}</p>
+            <p><strong>DNI:</strong> {{ clienteData?.dni }}</p>
+            <p><strong>Ingreso Mensual:</strong> S/ {{ clienteData?.ingresoMensual | number:'1.2-2' }}</p>
+          </div>
+        </div>
+
+        <div class="card summary-card">
+          <h3>🏘️ Propiedad</h3>
+          <div class="summary-data">
+            <p><strong>Código:</strong> {{ propiedadData?.codigo }}</p>
+            <p><strong>Tipo:</strong> {{ propiedadData?.tipo }}</p>
+            <p><strong>Precio:</strong> S/ {{ propiedadData?.precio | number:'1.2-2' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicadores Financieros -->
+      <div class="card indicators-card">
+        <div class="card-header">
+          <h2>📊 Indicadores Financieros</h2>
+          <div class="header-actions">
+            <button class="btn-icon" (click)="editLoan()" title="Editar préstamo">✏️</button>
+          </div>
+        </div>
+
+        <div class="indicators-grid">
+          <div class="indicator">
+            <div class="indicator-label">TEA</div>
+            <div class="indicator-value">{{ tea | number:'1.2-2' }}%</div>
+            <div class="indicator-desc">Tasa Efectiva Anual</div>
+          </div>
+          <div class="indicator">
+            <div class="indicator-label">TCEA</div>
+            <div class="indicator-value">{{ tcea | number:'1.2-2' }}%</div>
+            <div class="indicator-desc">Tasa Costo Efectivo Anual</div>
+          </div>
+          <div class="indicator">
+            <div class="indicator-label">TREA</div>
+            <div class="indicator-value">{{ trea | number:'1.2-2' }}%</div>
+            <div class="indicator-desc">Tasa Rendimiento Efectivo Anual</div>
+          </div>
+          <div class="indicator">
+            <div class="indicator-label">VAN</div>
+            <div class="indicator-value">S/ {{ van | number:'1.2-2' }}</div>
+            <div class="indicator-desc">Valor Actual Neto</div>
+          </div>
+          <div class="indicator">
+            <div class="indicator-label">TIR</div>
+            <div class="indicator-value">{{ tir | number:'1.2-2' }}%</div>
+            <div class="indicator-desc">Tasa Interna de Retorno</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen de Pagos -->
+      <div class="summary-cards">
+        <div class="summary-card card-blue">
+          <div class="card-icon">💵</div>
+          <div class="card-info">
+            <p class="card-label">Cuota Mensual</p>
+            <p class="card-value">{{ prestamoForm.get('moneda')?.value }} {{ cuotaMensual | number:'1.2-2' }}</p>
+          </div>
+        </div>
+
+        <div class="summary-card card-green">
+          <div class="card-icon">📈</div>
+          <div class="card-info">
+            <p class="card-label">Total Intereses</p>
+            <p class="card-value">{{ prestamoForm.get('moneda')?.value }} {{ totalIntereses | number:'1.2-2' }}</p>
+          </div>
+        </div>
+
+        <div class="summary-card card-purple">
+          <div class="card-icon">💰</div>
+          <div class="card-info">
+            <p class="card-label">Total a Pagar</p>
+            <p class="card-value">{{ prestamoForm.get('moneda')?.value }} {{ totalPagado | number:'1.2-2' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información de Transparencia -->
+      <div class="card">
+        <div class="card-header">
+          <h2>📋 Información de Transparencia Financiera</h2>
+        </div>
+        <div class="transparency-info">
+          <div class="info-row">
+            <span class="info-label">Periodicidad de Capitalización:</span>
+            <span class="info-value">Mensual (30 días)</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Tasa Moratoria:</span>
+            <span class="info-value">{{ prestamoForm.get('tasaMoratoria')?.value }}% anual</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Comisión de Prepago:</span>
+            <span class="info-value">1.5% del saldo</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Comisión de Activación:</span>
+            <span class="info-value">S/ {{ prestamoForm.get('comisionActivacion')?.value }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Seguro de Desgravamen:</span>
+            <span class="info-value">{{ prestamoForm.get('tasaSeguroDesgravamen')?.value }}% mensual</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Seguro de Inmueble:</span>
+            <span class="info-value">{{ prestamoForm.get('tasaSeguroInmueble')?.value }}% mensual</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Método de Cálculo:</span>
+            <span class="info-value">Francés Vencido Ordinario (30 días)</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Entidad Financiera:</span>
+            <span class="info-value">{{ prestamoForm.get('entidadFinanciera')?.value }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cronograma de Pagos -->
+      <div class="card table-card">
+        <div class="card-header">
+          <h2>📅 Cronograma de Pagos - Método Francés</h2>
+          <div class="header-actions">
+            <button class="btn-export" (click)="exportToPDF()">📥 Exportar PDF</button>
+            <button class="btn-save" (click)="saveToDatabase()">💾 Guardar</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="payment-table">
+            <thead>
+            <tr>
+              <th>N°</th>
+              <th>Fecha</th>
+              <th>Saldo Inicial</th>
+              <th>Cuota</th>
+              <th>Interés</th>
+              <th>Amortización</th>
+              <th>Seguro Desg.</th>
+              <th>Seguro Inm.</th>
+              <th>Cuota Total</th>
+              <th>Saldo Final</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let payment of paymentPlan"
+                [class.grace-period]="payment.amortizacion === 0"
+                [class.partial-grace]="payment.cuota > 0 && payment.amortizacion === 0">
+              <td class="text-center">{{ payment.periodo }}</td>
+              <td class="text-center">{{ payment.fechaPago | date:'dd/MM/yyyy' }}</td>
+              <td class="text-right">{{ payment.saldoInicial | number:'1.2-2' }}</td>
+              <td class="text-right bold">{{ payment.cuota | number:'1.2-2' }}</td>
+              <td class="text-right text-red">{{ payment.interes | number:'1.2-2' }}</td>
+              <td class="text-right text-green">{{ payment.amortizacion | number:'1.2-2' }}</td>
+              <td class="text-right">{{ payment.seguroDesgravamen | number:'1.2-2' }}</td>
+              <td class="text-right">{{ payment.seguroInmueble | number:'1.2-2' }}</td>
+              <td class="text-right bold text-blue">{{ payment.cuotaTotal | number:'1.2-2' }}</td>
+              <td class="text-right">{{ payment.saldoFinal | number:'1.2-2' }}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Acciones Finales -->
+      <div class="final-actions">
+        <button class="btn-secondary" (click)="resetForm()">
+          🔄 Nueva Simulación
+        </button>
+        <button class="btn-secondary" (click)="editClient()">
+          ✏️ Editar Cliente
+        </button>
+        <button class="btn-secondary" (click)="editProperty()">
+          ✏️ Editar Propiedad
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
