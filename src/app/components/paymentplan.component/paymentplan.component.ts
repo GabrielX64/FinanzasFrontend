@@ -1,150 +1,146 @@
-import { Component } from '@angular/core';
-import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
-import {CommonModule} from '@angular/common';
-import {Router} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { ClientService, ClientDTO, MaritalStatusDTO, FinancialEntityDTO } from '../../services/client.service';
+import { LoanService, LoanRequestDTO, LoanResponseDTO } from '../../services/loan.service';
+import { AuthService } from '../../services/auth.service';
 
 interface PaymentDetail {
-  periodo: number;
-  fechaPago: Date;
-  saldoInicial: number;
-  cuota: number;
-  interes: number;
-  amortizacion: number;
-  saldoFinal: number;
-  seguroDesgravamen: number;
-  seguroInmueble: number;
-  cuotaTotal: number;
-}
-
-interface ClienteData {
-  nombres: string;
-  apellidos: string;
-  dni: string;
-  email: string;
-  telefono: string;
-  ingresoMensual: number;
-  ocupacion: string;
-  estadoCivil: string;
-  direccion: string;
-}
-
-interface PropiedadData {
-  codigo: string;
-  tipo: string;
-  direccion: string;
-  area: number;
-  precio: number;
-  numeroHabitaciones: number;
-  numeroBanos: number;
-  distrito: string;
-  provincia: string;
+  period: number;
+  initialBalance: number;
+  fee: number;
+  interest: number;
+  amortization: number;
+  finalBalance: number;
+  cashFlow: number;
 }
 
 @Component({
-  selector: 'app-paymentplan.component',
+  selector: 'app-payment-plan',
+  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './paymentplan.component.html',
-  styleUrl: './paymentplan.component.css',
-  standalone: true
+  templateUrl: './payment-plan.component.html',
+  styleUrls: ['./payment-plan.component.css']
 })
-export class PaymentplanComponent {
+export class PaymentPlanComponent implements OnInit {
   currentStep = 1;
-  totalSteps = 4;
 
-  clienteForm: FormGroup = new FormGroup({});
-  propiedadForm: FormGroup = new FormGroup({});
-  prestamoForm: FormGroup = new FormGroup({});
+  clientForm: FormGroup;
+  loanForm: FormGroup;
 
   showResults = false;
   paymentPlan: PaymentDetail[] = [];
 
-  // Datos almacenados
-  clienteData: ClienteData | null = null;
-  propiedadData: PropiedadData | null = null;
+  // Datos guardados
+  clientData: ClientDTO | null = null;
+  savedClientId: number | null = null;
 
-  // Cálculos financieros
+  // Catálogos
+  maritalStatuses: MaritalStatusDTO[] = [];
+  financialEntities: FinancialEntityDTO[] = [];
+
+  // Resultados
   cuotaMensual = 0;
   totalIntereses = 0;
   totalPagado = 0;
-
-  // Indicadores financieros
   tea = 0;
   tcea = 0;
   trea = 0;
   van = 0;
   tir = 0;
+  downPayment = 0;
+  downPaymentPercentage = 0;
+  financedAmount = 0;
+  selectedFinancialEntity = '';
 
-  // Seguros y comisiones
-  seguroDesgravamen = 0; // 0.05% del saldo
-  seguroInmueble = 0; // 0.03% del valor de la propiedad
-  comisionActivacion = 0;
-  comisionPrepago = 0; // 1.5% del saldo
-  tasaMoratoria = 0;
+  isLoading = false;
+  errorMessage = '';
 
   constructor(
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private clientService: ClientService,
+    private loanService: LoanService,
+    private authService: AuthService
   ) {
-    this.initForms();
-  }
-
-  initForms() {
-    // Formulario de Cliente
-    this.clienteForm = this.fb.group({
-      nombres: ['', [Validators.required, Validators.minLength(2)]],
-      apellidos: ['', [Validators.required, Validators.minLength(2)]],
+    this.clientForm = this.fb.group({
+      names: ['', [Validators.required, Validators.minLength(2)]],
+      surnames: ['', [Validators.required, Validators.minLength(2)]],
       dni: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
       email: ['', [Validators.required, Validators.email]],
-      telefono: ['', [Validators.required, Validators.pattern(/^\d{9}$/)]],
-      ingresoMensual: ['', [Validators.required, Validators.min(1)]],
-      ocupacion: ['', Validators.required],
-      estadoCivil: ['', Validators.required],
-      direccion: ['', Validators.required]
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{9}$/)]],
+      monthlyIncome: ['', [Validators.required, Validators.min(1)]],
+      occupation: ['', Validators.required],
+      maritalStatusID: ['', Validators.required],
+      currentAddress: ['', Validators.required]
     });
 
-    // Formulario de Propiedad
-    this.propiedadForm = this.fb.group({
-      codigo: ['', Validators.required],
-      tipo: ['', Validators.required],
-      direccion: ['', Validators.required],
-      area: ['', [Validators.required, Validators.min(1)]],
-      precio: ['', [Validators.required, Validators.min(1)]],
-      numeroHabitaciones: ['', [Validators.required, Validators.min(1)]],
-      numeroBanos: ['', [Validators.required, Validators.min(1)]],
-      distrito: ['', Validators.required],
-      provincia: ['', Validators.required]
+    this.loanForm = this.fb.group({
+      propertyPrice: ['', [Validators.required, Validators.min(1)]],
+      principal: ['', [Validators.required, Validators.min(1)]],
+      years: ['', [Validators.required, Validators.min(1), Validators.max(30)]],
+      totalGrace: [0, [Validators.min(0), Validators.max(24)]],
+      partialGrace: [0, [Validators.min(0), Validators.max(24)]],
+      financialEntityID: ['', Validators.required],
+      rateType: ['TEA', Validators.required],
+      tea: ['', [Validators.min(0), Validators.max(100)]],
+      tnp: [''],
+      capitalizationFrequencyID: [''],
+      cok: [10, [Validators.required, Validators.min(0)]]
     });
 
-    // Formulario de Préstamo
-    this.prestamoForm = this.fb.group({
-      montoPrestamo: ['', [Validators.required, Validators.min(1)]],
-      cuotaInicial: ['', [Validators.required, Validators.min(0)]],
-      bonoTechoPropio: [false],
-      montoBono: [0],
-      tasaInteres: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
-      plazo: ['', [Validators.required, Validators.min(12), Validators.max(360)]],
-      moneda: ['PEN', Validators.required],
-      tipoTasa: ['efectiva', Validators.required],
-      periodoGraciaTotal: [0, [Validators.min(0), Validators.max(24)]],
-      periodoGraciaParcial: [0, [Validators.min(0), Validators.max(24)]],
-      entidadFinanciera: ['', Validators.required],
-      tasaSeguroDesgravamen: [0.05, Validators.required],
-      tasaSeguroInmueble: [0.03, Validators.required],
-      comisionActivacion: [0, Validators.min(0)],
-      tasaMoratoria: [5, [Validators.required, Validators.min(0)]]
+    // Validar según tipo de tasa
+    this.loanForm.get('rateType')?.valueChanges.subscribe(rateType => {
+      const teaControl = this.loanForm.get('tea');
+      const tnpControl = this.loanForm.get('tnp');
+      const capControl = this.loanForm.get('capitalizationFrequencyID');
+
+      if (rateType === 'TEA') {
+        teaControl?.setValidators([Validators.required, Validators.min(0)]);
+        tnpControl?.clearValidators();
+        capControl?.clearValidators();
+      } else {
+        tnpControl?.setValidators([Validators.required, Validators.min(0)]);
+        capControl?.setValidators([Validators.required]);
+        teaControl?.clearValidators();
+      }
+
+      teaControl?.updateValueAndValidity();
+      tnpControl?.updateValueAndValidity();
+      capControl?.updateValueAndValidity();
+    });
+  }
+
+  ngOnInit() {
+    this.loadCatalogs();
+  }
+
+  loadCatalogs() {
+    this.clientService.getMaritalStatuses().subscribe({
+      next: (data) => {
+        this.maritalStatuses = data;
+      },
+      error: (error) => {
+        console.error('Error cargando estados civiles:', error);
+      }
+    });
+
+    this.clientService.getFinancialEntities().subscribe({
+      next: (data) => {
+        this.financialEntities = data;
+      },
+      error: (error) => {
+        console.error('Error cargando entidades financieras:', error);
+      }
     });
   }
 
   nextStep() {
-    if (this.currentStep === 1 && this.clienteForm.valid) {
-      this.clienteData = this.clienteForm.value;
-      this.currentStep++;
-    } else if (this.currentStep === 2 && this.propiedadForm.valid) {
-      this.propiedadData = this.propiedadForm.value;
-      this.currentStep++;
-    } else if (this.currentStep === 3 && this.prestamoForm.valid) {
-      this.currentStep++;
-      this.calculatePaymentPlan();
+    if (this.currentStep === 1 && this.clientForm.valid) {
+      this.saveClient();
+    } else if (this.currentStep === 2 && this.loanForm.valid) {
+      this.calculateLoan();
     } else {
       this.markFormGroupTouched(this.getCurrentForm());
     }
@@ -153,184 +149,126 @@ export class PaymentplanComponent {
   prevStep() {
     if (this.currentStep > 1) {
       this.currentStep--;
+      this.errorMessage = '';
     }
   }
 
   getCurrentForm(): FormGroup {
-    switch (this.currentStep) {
-      case 1: return this.clienteForm;
-      case 2: return this.propiedadForm;
-      case 3: return this.prestamoForm;
-      default: return this.clienteForm;
-    }
+    return this.currentStep === 1 ? this.clientForm : this.loanForm;
   }
 
-  calculatePaymentPlan() {
-    const formData = this.prestamoForm.value;
+  saveClient() {
+    this.isLoading = true;
+    this.errorMessage = '';
 
-    let monto = parseFloat(formData.montoPrestamo);
-    const cuotaInicial = parseFloat(formData.cuotaInicial);
-    const montoBono = formData.bonoTechoPropio ? parseFloat(formData.montoBono) : 0;
+    const clientData: ClientDTO = this.clientForm.value;
 
-    // Monto neto del préstamo
-    monto = monto - cuotaInicial - montoBono;
-
-    // Convertir tasa según tipo
-    let tasaMensual = 0;
-    if (formData.tipoTasa === 'efectiva') {
-      // TEA a TEM
-      const tea = parseFloat(formData.tasaInteres) / 100;
-      tasaMensual = Math.pow(1 + tea, 1/12) - 1;
-    } else {
-      // TNA a TEM
-      tasaMensual = (parseFloat(formData.tasaInteres) / 100) / 12;
-    }
-
-    const plazo = parseInt(formData.plazo);
-    const periodoGraciaTotal = parseInt(formData.periodoGraciaTotal);
-    const periodoGraciaParcial = parseInt(formData.periodoGraciaParcial);
-
-    // Calcular seguros
-    this.seguroDesgravamen = parseFloat(formData.tasaSeguroDesgravamen) / 100;
-    this.seguroInmueble = parseFloat(formData.tasaSeguroInmueble) / 100;
-    this.comisionActivacion = parseFloat(formData.comisionActivacion);
-    this.tasaMoratoria = parseFloat(formData.tasaMoratoria) / 100;
-
-    // Calcular cuota mensual (método francés)
-    const plazoPago = plazo - periodoGraciaTotal - periodoGraciaParcial;
-    this.cuotaMensual = monto * (tasaMensual * Math.pow(1 + tasaMensual, plazoPago)) /
-      (Math.pow(1 + tasaMensual, plazoPago) - 1);
-
-    // Generar cronograma
-    this.paymentPlan = [];
-    let saldo = monto;
-    this.totalIntereses = 0;
-    const fechaInicio = new Date();
-
-    for (let i = 1; i <= plazo; i++) {
-      const interes = saldo * tasaMensual;
-      let amortizacion = 0;
-      let cuota = 0;
-
-      // Período de gracia total
-      if (i <= periodoGraciaTotal) {
-        cuota = 0;
-        amortizacion = 0;
-        saldo += interes; // Se capitaliza el interés
+    this.clientService.createClient(clientData).subscribe({
+      next: (response) => {
+        console.log('Cliente creado:', response);
+        this.clientData = response;
+        this.savedClientId = response.clientID!;
+        this.currentStep = 2;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error al crear cliente:', error);
+        this.errorMessage = error.error?.message || 'Error al guardar el cliente';
+        this.isLoading = false;
       }
-      // Período de gracia parcial
-      else if (i <= periodoGraciaTotal + periodoGraciaParcial) {
-        cuota = interes;
-        amortizacion = 0;
-      }
-      // Período normal
-      else {
-        cuota = this.cuotaMensual;
-        amortizacion = cuota - interes;
-        saldo -= amortizacion;
-      }
-
-      // Calcular seguros
-      const segDesgravanmen = saldo * this.seguroDesgravamen;
-      const segInmueble = (this.propiedadData?.precio || 0) * this.seguroInmueble;
-      const cuotaTotal = cuota + segDesgravanmen + segInmueble;
-
-      const fechaPago = new Date(fechaInicio);
-      fechaPago.setMonth(fechaPago.getMonth() + i);
-
-      this.paymentPlan.push({
-        periodo: i,
-        fechaPago: fechaPago,
-        saldoInicial: i === 1 ? monto : this.paymentPlan[i-2].saldoFinal,
-        cuota: cuota,
-        interes: interes,
-        amortizacion: amortizacion,
-        saldoFinal: saldo > 0 ? saldo : 0,
-        seguroDesgravamen: segDesgravanmen,
-        seguroInmueble: segInmueble,
-        cuotaTotal: cuotaTotal
-      });
-
-      this.totalIntereses += interes;
-    }
-
-    this.totalPagado = monto + this.totalIntereses;
-
-    // Calcular indicadores
-    this.calculateFinancialIndicators(monto, tasaMensual);
-
-    this.showResults = true;
-  }
-
-  calculateFinancialIndicators(monto: number, tasaMensual: number) {
-    // TEA
-    this.tea = (Math.pow(1 + tasaMensual, 12) - 1) * 100;
-
-    // TCEA (incluye seguros y comisiones)
-    const costoTotal = this.totalPagado + this.comisionActivacion +
-      (this.paymentPlan.reduce((sum, p) => sum + p.seguroDesgravamen + p.seguroInmueble, 0));
-    this.tcea = ((costoTotal / monto) - 1) * 100;
-
-    // TREA (para el prestamista)
-    this.trea = this.tea; // Simplificado
-
-    // VAN (Valor Actual Neto)
-    const tasaDescuento = 0.10; // 10% anual
-    this.van = -monto;
-    this.paymentPlan.forEach((payment, index) => {
-      this.van += payment.cuotaTotal / Math.pow(1 + tasaDescuento/12, index + 1);
     });
-
-    // TIR (Tasa Interna de Retorno) - Aproximación
-    this.tir = this.calculateTIR(monto);
   }
 
-  calculateTIR(monto: number): number {
-    // Método de Newton-Raphson para calcular TIR
-    let tir = 0.1; // Estimación inicial 10%
-    const tolerance = 0.0001;
-    const maxIterations = 100;
-
-    for (let i = 0; i < maxIterations; i++) {
-      let npv = -monto;
-      let dnpv = 0;
-
-      this.paymentPlan.forEach((payment, index) => {
-        const period = index + 1;
-        npv += payment.cuotaTotal / Math.pow(1 + tir, period / 12);
-        dnpv -= (period / 12) * payment.cuotaTotal / Math.pow(1 + tir, period / 12 + 1);
-      });
-
-      const newTir = tir - npv / dnpv;
-
-      if (Math.abs(newTir - tir) < tolerance) {
-        return newTir * 100;
-      }
-
-      tir = newTir;
+  calculateLoan() {
+    if (!this.savedClientId) {
+      this.errorMessage = 'Error: No se encontró el ID del cliente';
+      return;
     }
 
-    return tir * 100;
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    const loanRequest: LoanRequestDTO = {
+      clientID: this.savedClientId,
+      asesorID: null,
+      financialEntityID: Number(this.loanForm.value.financialEntityID),
+      principal: Number(this.loanForm.value.principal),
+      years: Number(this.loanForm.value.years),
+      totalGrace: Number(this.loanForm.value.totalGrace),
+      partialGrace: Number(this.loanForm.value.partialGrace),
+      propertyId: null,
+      rateType: this.loanForm.value.rateType,
+      tea: this.loanForm.value.rateType === 'TEA' ? Number(this.loanForm.value.tea) / 100 : null,
+      tnp: this.loanForm.value.rateType === 'TNP' ? Number(this.loanForm.value.tnp) / 100 : null,
+      capitalizationFrequencyID: this.loanForm.value.capitalizationFrequencyID ? Number(this.loanForm.value.capitalizationFrequencyID) : null,
+      cok: Number(this.loanForm.value.cok) / 100,
+      propertyPrice: Number(this.loanForm.value.propertyPrice)
+    };
+
+    console.log('Enviando loan request:', loanRequest);
+
+    this.loanService.createFrenchLoan(loanRequest).subscribe({
+      next: (response: LoanResponseDTO) => {
+        console.log('Préstamo creado:', response);
+
+        this.van = response.van;
+        this.tir = response.tir * 100;
+        this.tcea = response.tcea * 100;
+        this.trea = this.tcea;
+        this.downPayment = response.downPayment;
+        this.downPaymentPercentage = response.downPaymentPercentage;
+        this.financedAmount = response.financedAmount;
+        this.selectedFinancialEntity = response.financialEntity;
+
+        // Calcular TEA
+        if (response.schedule.length > 0) {
+          const firstPayment = response.schedule[0];
+          if (firstPayment.initialBalance > 0) {
+            const monthlyRate = firstPayment.interest / firstPayment.initialBalance;
+            this.tea = (Math.pow(1 + monthlyRate, 12) - 1) * 100;
+          }
+        }
+
+        this.paymentPlan = response.schedule.map(item => ({
+          period: item.period,
+          initialBalance: item.initialBalance,
+          fee: item.fee,
+          interest: item.interest,
+          amortization: item.amortization,
+          finalBalance: item.finalBalance,
+          cashFlow: item.cashFlow
+        }));
+
+        this.totalIntereses = this.paymentPlan.reduce((sum, p) => sum + p.interest, 0);
+        this.totalPagado = this.paymentPlan.reduce((sum, p) => sum + p.fee, 0);
+        this.cuotaMensual = this.paymentPlan.find(p => p.fee > 0)?.fee || 0;
+
+        this.currentStep = 3;
+        this.showResults = true;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error al crear préstamo:', error);
+        this.errorMessage = error.error?.message || 'Error al calcular el plan de pagos';
+        this.isLoading = false;
+      }
+    });
   }
 
   resetForm() {
     this.currentStep = 1;
     this.showResults = false;
-    this.clienteForm.reset();
-    this.propiedadForm.reset();
-    this.prestamoForm.reset({
-      moneda: 'PEN',
-      tipoTasa: 'efectiva',
-      periodoGraciaTotal: 0,
-      periodoGraciaParcial: 0,
-      bonoTechoPropio: false,
-      tasaSeguroDesgravamen: 0.05,
-      tasaSeguroInmueble: 0.03,
-      tasaMoratoria: 5
+    this.clientForm.reset();
+    this.loanForm.reset({
+      rateType: 'TEA',
+      totalGrace: 0,
+      partialGrace: 0,
+      cok: 10
     });
     this.paymentPlan = [];
-    this.clienteData = null;
-    this.propiedadData = null;
+    this.clientData = null;
+    this.savedClientId = null;
+    this.errorMessage = '';
   }
 
   editClient() {
@@ -338,42 +276,17 @@ export class PaymentplanComponent {
     this.showResults = false;
   }
 
-  editProperty() {
+  editLoan() {
     this.currentStep = 2;
     this.showResults = false;
   }
 
-  editLoan() {
-    this.currentStep = 3;
-    this.showResults = false;
-  }
-
   exportToPDF() {
-    // Aquí irá la lógica de exportación a PDF
-    alert('Exportando a PDF...');
-  }
-
-  saveToDatabase() {
-    // Aquí irá la lógica para guardar en el backend
-    const dataToSave = {
-      cliente: this.clienteData,
-      propiedad: this.propiedadData,
-      prestamo: this.prestamoForm.value,
-      cronograma: this.paymentPlan,
-      indicadores: {
-        tea: this.tea,
-        tcea: this.tcea,
-        trea: this.trea,
-        van: this.van,
-        tir: this.tir
-      }
-    };
-
-    console.log('Datos a guardar:', dataToSave);
-    alert('Datos guardados exitosamente en la base de datos');
+    alert('Función de exportación a PDF en desarrollo');
   }
 
   logout() {
+    this.authService.logout();
     this.router.navigate(['/']);
   }
 

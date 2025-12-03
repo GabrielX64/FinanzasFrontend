@@ -20,20 +20,27 @@
         <div class="form-content">
           <h2>Login</h2>
 
-          <form>
+          <form [formGroup]="loginForm" (ngSubmit)="onLogin($event)">
             <div class="input-group">
-              <input type="text" placeholder="Username" class="input-field">
+              <input type="text" placeholder="Username" class="input-field" formControlName="username">
               <span class="input-icon">👤</span>
             </div>
 
             <div class="input-group">
-              <input type="password" placeholder="Password" class="input-field">
+              <input type="password" placeholder="Password" class="input-field" formControlName="password">
               <span class="input-icon">🔒</span>
+            </div>
+
+            <div class="error-alert" *ngIf="errorMessage && isLoginMode">
+              {{ errorMessage }}
             </div>
 
             <a href="#" class="forgot-password">Forgot password?</a>
 
-            <button type="button" class="btn-primary" (click)="onLogin()">Login</button>          </form>
+            <button type="submit" class="btn-primary" [disabled]="isLoading">
+              {{ isLoading ? 'Iniciando sesión...' : 'Login' }}
+            </button>
+          </form>
         </div>
       </div>
 
@@ -42,42 +49,48 @@
         <div class="form-content">
           <h2>Registration</h2>
 
-          <form class="form-container">
+          <form class="form-container" [formGroup]="signupForm" (ngSubmit)="onSignup($event)">
             <div class="column">
               <div class="input-group">
-                <input type="text" placeholder="Nombres" class="input-field">
+                <input type="text" placeholder="Nombres" class="input-field" formControlName="names">
                 <span class="input-icon">👤</span>
               </div>
 
               <div class="input-group">
-                <input type="text" placeholder="Username" class="input-field">
+                <input type="text" placeholder="Username" class="input-field" formControlName="username">
                 <span class="input-icon">👤</span>
               </div>
 
               <div class="input-group">
-                <input type="password" placeholder="Contraseña" class="input-field">
+                <input type="password" placeholder="Contraseña" class="input-field" formControlName="password">
                 <span class="input-icon">🔒</span>
               </div>
             </div>
 
             <div class="column">
               <div class="input-group">
-                <input type="text" placeholder="Apellidos" class="input-field">
+                <input type="text" placeholder="Apellidos" class="input-field" formControlName="surnames">
                 <span class="input-icon">👤</span>
               </div>
 
               <div class="input-group">
-                <input type="email" placeholder="Correo" class="input-field">
+                <input type="email" placeholder="Correo" class="input-field" formControlName="email">
                 <span class="input-icon">✉️</span>
               </div>
 
               <div class="input-group">
-                <input type="password" placeholder="Confirmar Contraseña" class="input-field">
+                <input type="password" placeholder="Confirmar Contraseña" class="input-field" formControlName="confirmPassword">
                 <span class="input-icon">🔒</span>
               </div>
             </div>
 
-            <button type="submit" class="btn-primary" (click)="onSignup()">Sign Up</button>
+            <div class="error-alert" *ngIf="errorMessage && !isLoginMode" style="grid-column: 1 / -1;">
+              {{ errorMessage }}
+            </div>
+
+            <button type="submit" class="btn-primary" [disabled]="isLoading">
+              {{ isLoading ? 'Creando cuenta...' : 'Sign Up' }}
+            </button>
           </form>
         </div>
       </div>
