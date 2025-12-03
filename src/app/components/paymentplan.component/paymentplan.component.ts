@@ -127,21 +127,36 @@ export class PaymentplanComponent implements OnInit {
   loadCatalogs() {
     this.clientService.getMaritalStatuses().subscribe({
       next: (data) => {
+        console.log('Estados civiles cargados:', data);
         this.maritalStatuses = data;
+
+        // Verificar que los datos tengan la estructura correcta
+        if (this.maritalStatuses.length > 0) {
+          console.log('Primer estado civil:', this.maritalStatuses[0]);
+        }
       },
       error: (error) => {
-        console.error('Error cargando estados civiles:', error);
-        this.errorMessage = 'Error al cargar catálogos';
+        console.error('Error completo cargando estados civiles:', error);
+        console.error('Status:', error.status);
+        console.error('Message:', error.message);
+        this.errorMessage = 'Error al cargar estados civiles: ' + (error.error?.message || error.message);
       }
     });
 
     this.clientService.getFinancialEntities().subscribe({
       next: (data) => {
+        console.log('Entidades financieras cargadas:', data);
         this.financialEntities = data;
+
+        if (this.financialEntities.length > 0) {
+          console.log('Primera entidad financiera:', this.financialEntities[0]);
+        }
       },
       error: (error) => {
-        console.error('Error cargando entidades financieras:', error);
-        this.errorMessage = 'Error al cargar catálogos';
+        console.error('Error completo cargando entidades financieras:', error);
+        console.error('Status:', error.status);
+        console.error('Message:', error.message);
+        this.errorMessage = 'Error al cargar entidades financieras: ' + (error.error?.message || error.message);
       }
     });
   }

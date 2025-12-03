@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
 export interface ClientDTO {
@@ -17,8 +18,11 @@ export interface ClientDTO {
 }
 
 export interface MaritalStatusDTO {
-  maritalStatusId: number;
+  maritalStatusId?: number;
+  maritalStatusID?: number;
+  id?: number;
   statusName: string;
+  name?: string;
 }
 
 export interface FinancialEntityDTO {
@@ -75,6 +79,10 @@ export class ClientService {
     return this.http.get<MaritalStatusDTO[]>(
       `${this.apiUrl}/estados-civiles`,
       { headers: this.getHeaders() }
+    ).pipe(
+      tap(data => {
+        console.log('Estados civiles recibidos del backend:', data);
+      })
     );
   }
 
@@ -82,6 +90,10 @@ export class ClientService {
     return this.http.get<FinancialEntityDTO[]>(
       `${this.apiUrl}/entidades-financieras/activas`,
       { headers: this.getHeaders() }
+    ).pipe(
+      tap(data => {
+        console.log('Entidades financieras recibidas del backend:', data);
+      })
     );
   }
 }

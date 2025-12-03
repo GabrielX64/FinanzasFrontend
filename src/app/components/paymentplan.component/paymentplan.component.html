@@ -91,10 +91,12 @@
               <label class="form-label">Estado Civil *</label>
               <select class="form-input" formControlName="maritalStatusID">
                 <option value="">Seleccione...</option>
-                <option *ngFor="let status of maritalStatuses" [value]="status.maritalStatusId">
-                  {{ status.statusName }}
+                <option *ngFor="let status of maritalStatuses"
+                        [value]="status.maritalStatusId || status.maritalStatusID || status.id">
+                  {{ status.statusName || status.name }}
                 </option>
               </select>
+              <span class="error-message" *ngIf="hasError(clientForm, 'maritalStatusID', 'required')">Campo requerido</span>
             </div>
 
             <div class="form-group full-width" [class.error]="isFieldInvalid(clientForm, 'currentAddress')">
