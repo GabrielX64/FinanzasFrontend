@@ -1,0 +1,188 @@
+<div class="properties-container">
+  <!-- Header -->
+  <div class="header-section">
+    <h1 class="page-title">🏠 Gestión de Propiedades</h1>
+    <button class="btn-primary" (click)="openAddModal()">
+      ➕ Nueva Propiedad
+    </button>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-section">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        placeholder="Buscar por código o dirección..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()"
+        class="search-input"
+      />
+    </div>
+  </div>
+
+  <!-- Properties Grid -->
+  <div class="properties-grid">
+    <div *ngFor="let property of filteredProperties" class="property-card">
+      <div class="property-image">
+        <div class="image-placeholder">🏠</div>
+        <div class="property-status" [class]="'status-' + (property.status?.statusID || 1)">
+          {{ property.status?.name || 'N/A' }}
+        </div>
+      </div>
+
+      <div class="property-content">
+        <div class="property-header">
+          <div>
+            <h3 class="property-code">{{ property.code }}</h3>
+            <p class="property-type">{{ property.type?.name || 'N/A' }}</p>
+          </div>
+        </div>
+
+        <p class="property-address">📍 {{ property.address }}</p>
+
+        <div class="property-details">
+          <div class="detail-item">
+            <span class="detail-label">Área</span>
+            <span class="detail-value">{{ property.areaM2 }} m²</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Habitaciones</span>
+            <span class="detail-value">🛏️ {{ property.bedrooms }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Baños</span>
+            <span class="detail-value">🚿 {{ property.bathrooms }}</span>
+          </div>
+        </div>
+
+        <div class="property-price">
+          <span class="price-label">Precio</span>
+          <span class="price-value">
+            {{ property.currency?.symbol }} {{ property.salePrice | number:'1.2-2' }}
+          </span>
+        </div>
+
+        <div class="property-actions">
+          <button class="btn-action btn-edit" (click)="openEditModal(property)">
+            ✏️ Editar
+          </button>
+          <button class="btn-action btn-delete" (click)="deleteProperty(property.propertyID!)">
+            🗑️ Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="filteredProperties.length === 0" class="no-results">
+    <p>📦 No se encontraron propiedades</p>
+  </div>
+
+  <!-- Modal -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingProperty ? 'Editar Propiedad' : 'Nueva Propiedad' }}</h2>
+        <button class="btn-close" (click)="closeModal()">✕</button>
+      </div>
+
+      <form [formGroup]="propertyForm" (ngSubmit)="onSubmit()">
+        <div class="modal-body">
+          <div class="form-grid">
+            <!-- Código -->
+            <div class="form-group" [class.error]="isFieldInvalid('code')">
+              <label class="form-label">Código *</label>
+              <input type="text" class="form-input" formControlName="code" placeholder="PROP-001">
+              <span class="error-message" *ngIf="hasError('code', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- Tipo de Propiedad -->
+            <div class="form-group" [class.error]="isFieldInvalid('typeId')">
+              <label class="form-label">Tipo de Propiedad *</label>
+              <select class="form-input" formControlName="typeId">
+                <option value="">Seleccione...</option>
+                <option *ngFor="let type of propertyTypes" [value]="type.propertyTypeID">
+                  {{ type.name }}
+                </option>
+              </select>
+              <span class="error-message" *ngIf="hasError('typeId', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- Dirección -->
+            <div class="form-group full-width" [class.error]="isFieldInvalid('address')">
+              <label class="form-label">Dirección *</label>
+              <input type="text" class="form-input" formControlName="address" placeholder="Av. Principal 123, Distrito">
+              <span class="error-message" *ngIf="hasError('address', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- Área -->
+            <div class="form-group" [class.error]="isFieldInvalid('areaM2')">
+              <label class="form-label">Área (m²) *</label>
+              <input type="number" class="form-input" formControlName="areaM2" step="0.01" placeholder="120.50">
+              <span class="error-message" *ngIf="hasError('areaM2', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- Habitaciones -->
+            <div class="form-group" [class.error]="isFieldInvalid('bedrooms')">
+              <label class="form-label">Habitaciones *</label>
+              <input type="number" class="form-input" formControlName="bedrooms" placeholder="3">
+              <span class="error-message" *ngIf="hasError('bedrooms', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- Baños -->
+            <div class="form-group" [class.error]="isFieldInvalid('bathrooms')">
+              <label class="form-label">Baños *</label>
+              <input type="number" class="form-input" formControlName="bathrooms" placeholder="2">
+              <span class="error-message" *ngIf="hasError('bathrooms', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- Precio -->
+            <div class="form-group" [class.error]="isFieldInvalid('salePrice')">
+              <label class="form-label">Precio de Venta *</label>
+              <input type="number" class="form-input" formControlName="salePrice" step="0.01" placeholder="450000.00">
+              <span class="error-message" *ngIf="hasError('salePrice', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- Moneda -->
+            <div class="form-group" [class.error]="isFieldInvalid('currencyId')">
+              <label class="form-label">Moneda *</label>
+              <select class="form-input" formControlName="currencyId">
+                <option value="">Seleccione...</option>
+                <option *ngFor="let currency of currencies" [value]="currency.currencyID">
+                  {{ currency.name }} ({{ currency.symbol }})
+                </option>
+              </select>
+              <span class="error-message" *ngIf="hasError('currencyId', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- Estado -->
+            <div class="form-group" [class.error]="isFieldInvalid('statusId')">
+              <label class="form-label">Estado *</label>
+              <select class="form-input" formControlName="statusId">
+                <option value="">Seleccione...</option>
+                <option *ngFor="let status of propertyStatuses" [value]="status.statusID">
+                  {{ status.name }}
+                </option>
+              </select>
+              <span class="error-message" *ngIf="hasError('statusId', 'required')">Campo requerido</span>
+            </div>
+          </div>
+
+          <div *ngIf="errorMessage" class="error-alert">
+            {{ errorMessage }}
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="isLoading">
+            {{ isLoading ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
