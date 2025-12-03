@@ -20,14 +20,14 @@ interface PaymentDetail {
   selector: 'app-payment-plan',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './payment-plan.component.html',
-  styleUrls: ['./payment-plan.component.css']
+  templateUrl: './paymentplan.component.html',
+  styleUrls: ['./paymentplan.component.css']
 })
-export class PaymentPlanComponent implements OnInit {
+export class PaymentplanComponent implements OnInit {
   currentStep = 1;
 
-  clientForm: FormGroup;
-  loanForm: FormGroup;
+  clientForm!: FormGroup;
+  loanForm!: FormGroup;
 
   showResults = false;
   paymentPlan: PaymentDetail[] = [];
@@ -64,6 +64,14 @@ export class PaymentPlanComponent implements OnInit {
     private loanService: LoanService,
     private authService: AuthService
   ) {
+    this.initializeForms();
+  }
+
+  ngOnInit() {
+    this.loadCatalogs();
+  }
+
+  private initializeForms() {
     this.clientForm = this.fb.group({
       names: ['', [Validators.required, Validators.minLength(2)]],
       surnames: ['', [Validators.required, Validators.minLength(2)]],
@@ -92,28 +100,28 @@ export class PaymentPlanComponent implements OnInit {
 
     // Validar según tipo de tasa
     this.loanForm.get('rateType')?.valueChanges.subscribe(rateType => {
-      const teaControl = this.loanForm.get('tea');
-      const tnpControl = this.loanForm.get('tnp');
-      const capControl = this.loanForm.get('capitalizationFrequencyID');
-
-      if (rateType === 'TEA') {
-        teaControl?.setValidators([Validators.required, Validators.min(0)]);
-        tnpControl?.clearValidators();
-        capControl?.clearValidators();
-      } else {
-        tnpControl?.setValidators([Validators.required, Validators.min(0)]);
-        capControl?.setValidators([Validators.required]);
-        teaControl?.clearValidators();
-      }
-
-      teaControl?.updateValueAndValidity();
-      tnpControl?.updateValueAndValidity();
-      capControl?.updateValueAndValidity();
+      this.updateRateValidators(rateType);
     });
   }
 
-  ngOnInit() {
-    this.loadCatalogs();
+  private updateRateValidators(rateType: string) {
+    const teaControl = this.loanForm.get('tea');
+    const tnpControl = this.loanForm.get('tnp');
+    const capControl = this.loanForm.get('capitalizationFrequencyID');
+
+    if (rateType === 'TEA') {
+      teaControl?.setValidators([Validators.required, Validators.min(0)]);
+      tnpControl?.clearValidators();
+      capControl?.clearValidators();
+    } else {
+      tnpControl?.setValidators([Validators.required, Validators.min(0)]);
+      capControl?.setValidators([Validators.required]);
+      teaControl?.clearValidators();
+    }
+
+    teaControl?.updateValueAndValidity();
+    tnpControl?.updateValueAndValidity();
+    capControl?.updateValueAndValidity();
   }
 
   loadCatalogs() {
@@ -123,6 +131,7 @@ export class PaymentPlanComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error cargando estados civiles:', error);
+        this.errorMessage = 'Error al cargar catálogos';
       }
     });
 
@@ -132,17 +141,28 @@ export class PaymentPlanComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error cargando entidades financieras:', error);
+        this.errorMessage = 'Error al cargar catálogos';
       }
     });
   }
 
   nextStep() {
-    if (this.currentStep === 1 && this.clientForm.valid) {
+    this.errorMessage = '';
+
+    if (this.currentStep === 1) {
+      if (this.clientForm.invalid) {
+        this.markFormGroupTouched(this.clientForm);
+        this.errorMessage = 'Por favor complete todos los campos requeridos correctamente';
+        return;
+      }
       this.saveClient();
-    } else if (this.currentStep === 2 && this.loanForm.valid) {
+    } else if (this.currentStep === 2) {
+      if (this.loanForm.invalid) {
+        this.markFormGroupTouched(this.loanForm);
+        this.errorMessage = 'Por favor complete todos los campos requeridos correctamente';
+        return;
+      }
       this.calculateLoan();
-    } else {
-      this.markFormGroupTouched(this.getCurrentForm());
     }
   }
 
@@ -150,6 +170,7 @@ export class PaymentPlanComponent implements OnInit {
     if (this.currentStep > 1) {
       this.currentStep--;
       this.errorMessage = '';
+      this.showResults = false;
     }
   }
 
@@ -161,7 +182,11 @@ export class PaymentPlanComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const clientData: ClientDTO = this.clientForm.value;
+    const clientData: ClientDTO = {
+      ...this.clientForm.value,
+      monthlyIncome: Number(this.clientForm.value.monthlyIncome),
+      maritalStatusID: Number(this.clientForm.value.maritalStatusID)
+    };
 
     this.clientService.createClient(clientData).subscribe({
       next: (response) => {
@@ -210,39 +235,7 @@ export class PaymentPlanComponent implements OnInit {
     this.loanService.createFrenchLoan(loanRequest).subscribe({
       next: (response: LoanResponseDTO) => {
         console.log('Préstamo creado:', response);
-
-        this.van = response.van;
-        this.tir = response.tir * 100;
-        this.tcea = response.tcea * 100;
-        this.trea = this.tcea;
-        this.downPayment = response.downPayment;
-        this.downPaymentPercentage = response.downPaymentPercentage;
-        this.financedAmount = response.financedAmount;
-        this.selectedFinancialEntity = response.financialEntity;
-
-        // Calcular TEA
-        if (response.schedule.length > 0) {
-          const firstPayment = response.schedule[0];
-          if (firstPayment.initialBalance > 0) {
-            const monthlyRate = firstPayment.interest / firstPayment.initialBalance;
-            this.tea = (Math.pow(1 + monthlyRate, 12) - 1) * 100;
-          }
-        }
-
-        this.paymentPlan = response.schedule.map(item => ({
-          period: item.period,
-          initialBalance: item.initialBalance,
-          fee: item.fee,
-          interest: item.interest,
-          amortization: item.amortization,
-          finalBalance: item.finalBalance,
-          cashFlow: item.cashFlow
-        }));
-
-        this.totalIntereses = this.paymentPlan.reduce((sum, p) => sum + p.interest, 0);
-        this.totalPagado = this.paymentPlan.reduce((sum, p) => sum + p.fee, 0);
-        this.cuotaMensual = this.paymentPlan.find(p => p.fee > 0)?.fee || 0;
-
+        this.processLoanResponse(response);
         this.currentStep = 3;
         this.showResults = true;
         this.isLoading = false;
@@ -253,6 +246,42 @@ export class PaymentPlanComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  private processLoanResponse(response: LoanResponseDTO) {
+    this.van = response.van;
+    this.tir = response.tir * 100;
+    this.tcea = response.tcea * 100;
+    this.trea = this.tcea;
+    this.downPayment = response.downPayment;
+    this.downPaymentPercentage = response.downPaymentPercentage;
+    this.financedAmount = response.financedAmount;
+    this.selectedFinancialEntity = response.financialEntity;
+
+    // Calcular TEA
+    if (response.schedule && response.schedule.length > 0) {
+      const firstPayment = response.schedule[0];
+      if (firstPayment.initialBalance > 0) {
+        const monthlyRate = firstPayment.interest / firstPayment.initialBalance;
+        this.tea = (Math.pow(1 + monthlyRate, 12) - 1) * 100;
+      }
+    }
+
+    // Mapear el cronograma
+    this.paymentPlan = response.schedule.map(item => ({
+      period: item.period,
+      initialBalance: item.initialBalance,
+      fee: item.fee,
+      interest: item.interest,
+      amortization: item.amortization,
+      finalBalance: item.finalBalance,
+      cashFlow: item.cashFlow
+    }));
+
+    // Calcular totales
+    this.totalIntereses = this.paymentPlan.reduce((sum, p) => sum + p.interest, 0);
+    this.totalPagado = this.paymentPlan.reduce((sum, p) => sum + p.fee, 0);
+    this.cuotaMensual = this.paymentPlan.find(p => p.fee > 0)?.fee || 0;
   }
 
   resetForm() {
@@ -269,6 +298,20 @@ export class PaymentPlanComponent implements OnInit {
     this.clientData = null;
     this.savedClientId = null;
     this.errorMessage = '';
+
+    // Resetear resultados
+    this.cuotaMensual = 0;
+    this.totalIntereses = 0;
+    this.totalPagado = 0;
+    this.tea = 0;
+    this.tcea = 0;
+    this.trea = 0;
+    this.van = 0;
+    this.tir = 0;
+    this.downPayment = 0;
+    this.downPaymentPercentage = 0;
+    this.financedAmount = 0;
+    this.selectedFinancialEntity = '';
   }
 
   editClient() {
@@ -287,13 +330,17 @@ export class PaymentPlanComponent implements OnInit {
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/']);
+    this.router.navigate(['/auth']);
   }
 
   private markFormGroupTouched(formGroup: FormGroup) {
     Object.keys(formGroup.controls).forEach(key => {
       const control = formGroup.get(key);
       control?.markAsTouched();
+
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      }
     });
   }
 

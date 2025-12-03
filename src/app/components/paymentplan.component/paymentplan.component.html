@@ -37,8 +37,10 @@
     <div class="form-step" *ngIf="currentStep === 1">
       <div class="card">
         <div class="card-header">
-          <h2>👤 Información del Cliente</h2>
-          <p class="card-subtitle">Registre los datos del cliente</p>
+          <div>
+            <h2>👤 Información del Cliente</h2>
+            <p class="card-subtitle">Registre los datos del cliente</p>
+          </div>
         </div>
 
         <form [formGroup]="clientForm">
@@ -119,8 +121,10 @@
     <div class="form-step" *ngIf="currentStep === 2">
       <div class="card">
         <div class="card-header">
-          <h2>💰 Datos del Préstamo</h2>
-          <p class="card-subtitle">Configure los parámetros del crédito</p>
+          <div>
+            <h2>💰 Datos del Préstamo</h2>
+            <p class="card-subtitle">Configure los parámetros del crédito</p>
+          </div>
         </div>
 
         <form [formGroup]="loanForm">
@@ -234,21 +238,31 @@
     <div class="results-container" *ngIf="currentStep === 3 && showResults">
 
       <!-- Resumen del Cliente -->
-      <div class="card summary-card">
-        <h3>👤 Cliente Registrado</h3>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>👤 Cliente Registrado</h3>
+          </div>
+          <div class="header-actions">
+            <button class="btn-icon" (click)="editClient()" title="Editar cliente">✏️ Editar</button>
+          </div>
+        </div>
         <div class="summary-data">
           <p><strong>Nombre:</strong> {{ clientData?.names }} {{ clientData?.surnames }}</p>
           <p><strong>DNI:</strong> {{ clientData?.dni }}</p>
           <p><strong>Ingreso Mensual:</strong> S/ {{ clientData?.monthlyIncome | number:'1.2-2' }}</p>
         </div>
-        <button class="btn-icon" (click)="editClient()" title="Editar cliente">✏️ Editar</button>
       </div>
 
       <!-- Indicadores Financieros -->
       <div class="card indicators-card">
         <div class="card-header">
-          <h2>📊 Indicadores Financieros</h2>
-          <button class="btn-icon" (click)="editLoan()" title="Editar préstamo">✏️ Editar</button>
+          <div>
+            <h2>📊 Indicadores Financieros</h2>
+          </div>
+          <div class="header-actions">
+            <button class="btn-icon" (click)="editLoan()" title="Editar préstamo">✏️ Editar</button>
+          </div>
         </div>
 
         <div class="indicators-grid">
@@ -329,8 +343,12 @@
       <!-- Cronograma de Pagos -->
       <div class="card table-card">
         <div class="card-header">
-          <h2>📅 Cronograma de Pagos - Método Francés</h2>
-          <button class="btn-export" (click)="exportToPDF()">📥 Exportar PDF</button>
+          <div>
+            <h2>📅 Cronograma de Pagos - Método Francés</h2>
+          </div>
+          <div class="header-actions">
+            <button class="btn-export" (click)="exportToPDF()">📥 Exportar PDF</button>
+          </div>
         </div>
 
         <div class="table-container">
