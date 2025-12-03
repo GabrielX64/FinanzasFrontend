@@ -210,6 +210,7 @@ export class PaymentplanComponent implements OnInit {
         this.savedClientId = response.clientID!;
         this.currentStep = 2;
         this.isLoading = false;
+        console.log('Current Step:', this.currentStep);
       },
       error: (error) => {
         console.error('Error al crear cliente:', error);
