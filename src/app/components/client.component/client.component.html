@@ -1,1 +1,160 @@
-<p>client.component works!</p>
+<div class="clients-container">
+  <!-- Header -->
+  <div class="header-section">
+    <h1 class="page-title">👥 Gestión de Clientes</h1>
+    <button class="btn-primary" (click)="openAddModal()">
+      ➕ Nuevo Cliente
+    </button>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-section">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        placeholder="Buscar por nombre, apellido o DNI..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()"
+        class="search-input"
+      />
+    </div>
+  </div>
+
+  <!-- Clients Table -->
+  <div class="table-container">
+    <table class="clients-table">
+      <thead>
+      <tr>
+        <th>Nombre Completo</th>
+        <th>DNI</th>
+        <th>Email</th>
+        <th>Teléfono</th>
+        <th>Ingreso Mensual</th>
+        <th class="text-center">Acciones</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let client of filteredClients" class="table-row">
+        <td>
+          <div class="client-name">{{ client.names }} {{ client.surnames }}</div>
+          <div class="client-occupation">{{ client.occupation }}</div>
+        </td>
+        <td>{{ client.dni }}</td>
+        <td>{{ client.email }}</td>
+        <td>{{ client.phoneNumber }}</td>
+        <td class="income">S/ {{ client.monthlyIncome | number:'1.2-2' }}</td>
+        <td class="actions-cell">
+          <button class="btn-icon btn-edit" (click)="openEditModal(client)" title="Editar">
+            ✏️
+          </button>
+          <button class="btn-icon btn-delete" (click)="deleteClient(client.clientID!)" title="Eliminar">
+            🗑️
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="filteredClients.length === 0" class="no-results">
+      <p>No se encontraron clientes</p>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingClient ? 'Editar Cliente' : 'Nuevo Cliente' }}</h2>
+        <button class="btn-close" (click)="closeModal()">✕</button>
+      </div>
+
+      <form [formGroup]="clientForm" (ngSubmit)="onSubmit()">
+        <div class="modal-body">
+          <div class="form-grid">
+            <!-- Nombres -->
+            <div class="form-group" [class.error]="isFieldInvalid('names')">
+              <label class="form-label">Nombres *</label>
+              <input type="text" class="form-input" formControlName="names">
+              <span class="error-message" *ngIf="hasError('names', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- Apellidos -->
+            <div class="form-group" [class.error]="isFieldInvalid('surnames')">
+              <label class="form-label">Apellidos *</label>
+              <input type="text" class="form-input" formControlName="surnames">
+              <span class="error-message" *ngIf="hasError('surnames', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- DNI -->
+            <div class="form-group" [class.error]="isFieldInvalid('dni')">
+              <label class="form-label">DNI *</label>
+              <input type="text" class="form-input" formControlName="dni" maxlength="8">
+              <span class="error-message" *ngIf="hasError('dni', 'pattern')">DNI debe tener 8 dígitos</span>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group" [class.error]="isFieldInvalid('email')">
+              <label class="form-label">Email *</label>
+              <input type="email" class="form-input" formControlName="email">
+              <span class="error-message" *ngIf="hasError('email', 'email')">Email inválido</span>
+            </div>
+
+            <!-- Teléfono -->
+            <div class="form-group" [class.error]="isFieldInvalid('phoneNumber')">
+              <label class="form-label">Teléfono *</label>
+              <input type="text" class="form-input" formControlName="phoneNumber" maxlength="9">
+              <span class="error-message" *ngIf="hasError('phoneNumber', 'pattern')">Teléfono debe tener 9 dígitos</span>
+            </div>
+
+            <!-- Ingreso Mensual -->
+            <div class="form-group" [class.error]="isFieldInvalid('monthlyIncome')">
+              <label class="form-label">Ingreso Mensual (S/) *</label>
+              <input type="number" class="form-input" formControlName="monthlyIncome" step="0.01">
+              <span class="error-message" *ngIf="hasError('monthlyIncome', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- Ocupación -->
+            <div class="form-group" [class.error]="isFieldInvalid('occupation')">
+              <label class="form-label">Ocupación *</label>
+              <input type="text" class="form-input" formControlName="occupation">
+              <span class="error-message" *ngIf="hasError('occupation', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- Estado Civil -->
+            <div class="form-group" [class.error]="isFieldInvalid('maritalStatusID')">
+              <label class="form-label">Estado Civil *</label>
+              <select class="form-input" formControlName="maritalStatusID">
+                <option value="">Seleccione...</option>
+                <option *ngFor="let status of maritalStatuses" [value]="status.maritalStatusId">
+                  {{ status.statusName }}
+                </option>
+              </select>
+              <span class="error-message" *ngIf="hasError('maritalStatusID', 'required')">Campo requerido</span>
+            </div>
+
+            <!-- Dirección -->
+            <div class="form-group full-width" [class.error]="isFieldInvalid('currentAddress')">
+              <label class="form-label">Dirección Actual *</label>
+              <input type="text" class="form-input" formControlName="currentAddress">
+              <span class="error-message" *ngIf="hasError('currentAddress', 'required')">Campo requerido</span>
+            </div>
+          </div>
+
+          <div *ngIf="errorMessage" class="error-alert">
+            {{ errorMessage }}
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="isLoading">
+            {{ isLoading ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

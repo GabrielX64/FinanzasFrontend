@@ -52,6 +52,22 @@ export class ClientService {
     });
   }
 
+  // NUEVOS MÉTODOS AGREGADOS
+  getAllClients(): Observable<ClientDTO[]> {
+    return this.http.get<ClientDTO[]>(
+      `${this.apiUrl}/clientes`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  deleteClient(id: number): Observable<string> {
+    return this.http.delete<string>(
+      `${this.apiUrl}/cliente/delete/${id}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // MÉTODOS EXISTENTES
   createClient(client: ClientDTO): Observable<ClientDTO> {
     return this.http.post<ClientDTO>(
       `${this.apiUrl}/cliente`,
